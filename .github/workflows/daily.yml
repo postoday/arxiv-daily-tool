@@ -1,0 +1,43 @@
+name: Daily arXiv Update
+
+on:
+  schedule:
+    - cron: '0 2 * * 1-5'  # 2 AM UTC, Mon–Fri
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tool repo
+        uses: actions/checkout@v4
+
+      - name: Checkout site repo
+        uses: actions/checkout@v4
+        with:
+          repository: postoday/arxiv-daily-site
+          token: ${{ secrets.SITE_DEPLOY_TOKEN }}
+          path: _site_repo
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch, translate, and build
+        run: python run.py --data-dir _site_repo/data --site-dir _site_repo
+
+      - name: Commit and push site
+        working-directory: _site_repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet && echo "No changes to commit." && exit 0
+          git commit -m "chore: update $(date -u +%Y-%m-%d)"
+          git push

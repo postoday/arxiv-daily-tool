@@ -1,0 +1,67 @@
+<section class="page-head">
+  <div class="date-row">
+    <h1>{{ date }}<button id="cal-toggle" class="cal-toggle" aria-label="Toggle calendar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 1v3M11 1v3M2 7h12"/></svg></button></h1>
+    <div id="mini-cal" class="mini-cal"></div>
+  </div>
+
+  <div class="tabs" id="chips">
+    {% for cat in all_categories %}
+      <button class="tab {% if loop.first %}active{% endif %}" data-cat="{{ cat }}">
+        {{ category_labels.get(cat, cat) }}<span class="tab-code">{{ cat }}</span>
+      </button>
+    {% endfor %}
+  </div>
+
+  <div class="controls">
+    <input type="search" id="search" placeholder="Search title, authors, abstract…" autocomplete="off">
+    <span class="count-badge" id="count-badge"></span>
+  </div>
+</section>
+
+<ul class="paper-list" id="paper-list">
+  {% for p in papers %}
+    <li class="paper" data-cats="{{ p.categories|join(',') }}">
+      <h2 class="paper-title">
+        <a href="{{ p.abs_url }}" target="_blank" rel="noopener">{{ p.title }}</a>
+      </h2>
+      {% if p.title_zh %}<p class="paper-title-zh">{{ p.title_zh }}</p>{% endif %}
+      <div class="paper-meta">
+        <span class="authors">{{ p.authors|join(", ") }}</span>
+        {% if p.affiliations %}<span class="affiliations">{{ p.affiliations|join(" · ") }}</span>{% endif %}
+      </div>
+      <div class="paper-cats">
+        {% for c in p.categories %}
+          <span class="cat-tag {% if c == p.primary_category %}primary{% endif %}">{{ c }}</span>
+        {% endfor %}
+      </div>
+      <p class="paper-abstract">{{ p.abstract_zh if p.abstract_zh else p.abstract }}</p>
+      {% if p.abstract_zh %}
+      <details class="abstract-en">
+        <summary>Show English abstract</summary>
+        <p>{{ p.abstract }}</p>
+      </details>
+      {% endif %}
+      {% if p.comments %}<p class="paper-comments">{{ p.comments }}</p>{% endif %}
+      <div class="paper-actions">
+        <a href="{{ p.pdf_url }}" target="_blank" rel="noopener">PDF</a>
+        <a href="{{ p.abs_url }}" target="_blank" rel="noopener">Abs</a>
+        {% if p.html_url %}<a class="html" href="{{ p.html_url }}" target="_blank" rel="noopener">HTML</a>{% endif %}
+        {% for link in p.code_links %}
+          <a class="code" href="{{ link }}" target="_blank" rel="noopener">Code</a>
+        {% endfor %}
+        {% for link in p.project_links %}
+          <a class="project" href="{{ link }}" target="_blank" rel="noopener">Project</a>
+        {% endfor %}
+      </div>
+      {% if p.figures %}
+      <div class="paper-figures">
+        {% for fig in p.figures %}
+          <a href="{{ fig }}" target="_blank" rel="noopener"><img src="{{ fig }}" loading="lazy" alt="Figure"></a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </li>
+  {% else %}
+    <li class="empty">No papers for this day.</li>
+  {% endfor %}
+</ul>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}arXiv Daily{% endblock %}</title>
+  <link rel="stylesheet" href="{{ asset_prefix }}assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a href="{{ asset_prefix }}index.html" class="brand">arXiv Daily</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>Categories: {{ categories|join(", ") }}</span>
+      <span class="sep">·</span>
+      <span>Generated {{ generated_at }}</span>
+    </div>
+  </footer>
+
+  <script>
+    window.__archiveDates = {{ archive_dates | tojson }};
+    window.__currentDate = "{{ date }}";
+    window.__assetPrefix = "{{ asset_prefix }}";
+  </script>
+  <script src="{{ asset_prefix }}assets/app.js"></script>
+</body>
+</html>
