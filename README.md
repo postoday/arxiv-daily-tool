@@ -1,6 +1,6 @@
 # arxiv-daily-tool
 
-A Python CLI that fetches arXiv papers, translates abstracts to Chinese, extracts figures, and builds a static website — then pushes the result to a GitHub Pages site repo ([arxiv-daily-site](https://github.com/postoday/arxiv-daily-site)).
+A Python CLI that fetches arXiv papers, translates abstracts to Chinese, extracts figures, and builds a static website — then pushes the result to a GitHub Pages site repo ([arxiv-daily](https://github.com/postoday/arxiv-daily)).
 
 ## How it works
 
