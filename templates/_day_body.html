@@ -20,7 +20,7 @@
 
 <ul class="paper-list" id="paper-list">
   {% for p in papers %}
-    <li class="paper" data-cats="{{ p.categories|join(',') }}">
+    <li class="paper" data-cats="{{ p.primary_category }}">
       <h2 class="paper-title">
         <a href="{{ p.abs_url }}" target="_blank" rel="noopener">{{ p.title }}</a>
       </h2>
