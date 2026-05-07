@@ -420,6 +420,7 @@ body {
   margin: 0 0 8px;
 }
 .sel-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.sel-empty { color: var(--fg-muted); font-size: 14px; margin: 32px 0; text-align: center; }
 .sel-tag {
   font-size: 11px;
   background: var(--border);

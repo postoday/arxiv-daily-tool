@@ -12,11 +12,9 @@
         {{ category_labels.get(cat, cat) }}<span class="tab-code">{{ cat }}</span>
       </button>
     {% endfor %}
-    {% if selected_data %}
-      <button class="tab tab-selected" data-cat="__selected__">
-        Selected<span class="tab-code">精选</span>
-      </button>
-    {% endif %}
+    <button class="tab tab-selected" data-cat="__selected__">
+      Selected<span class="tab-code">精选</span>
+    </button>
   </div>
 
   <div class="controls">
@@ -73,8 +71,8 @@
   {% endfor %}
 </ul>
 
-{% if selected_data %}
 <div id="selected-panel" class="hidden">
+  {% if selected_data %}
   <p class="sel-meta">从 {{ selected_data.total_candidates }} 篇中精选</p>
   {% for cat in selected_data.categories %}
   <div class="sel-category">
@@ -120,5 +118,7 @@
     </ul>
   </div>
   {% endfor %}
+  {% else %}
+  <p class="sel-empty">今日暂无精选内容。</p>
+  {% endif %}
 </div>
-{% endif %}
