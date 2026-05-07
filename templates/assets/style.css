@@ -255,7 +255,7 @@ body {
   padding: 18px 20px;
   margin-bottom: 12px;
 }
-.paper.hidden { display: none; }
+.hidden { display: none; }
 
 .paper-title { margin: 0 0 6px; font-size: 16px; line-height: 1.35; }
 .paper-title a { color: var(--fg); text-decoration: none; }
