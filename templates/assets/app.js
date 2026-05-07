@@ -63,6 +63,20 @@
       });
     }
     draw();
+
+    // Prev / next date navigation
+    const sorted = [...dates].sort();
+    const idx = sorted.indexOf(cur);
+    const prevBtn = document.getElementById('date-prev');
+    const nextBtn = document.getElementById('date-next');
+    if (prevBtn) {
+      if (idx > 0) prevBtn.href = pfx + 'archive/' + sorted[idx - 1] + '.html';
+      else prevBtn.classList.add('disabled');
+    }
+    if (nextBtn) {
+      if (idx >= 0 && idx < sorted.length - 1) nextBtn.href = pfx + 'archive/' + sorted[idx + 1] + '.html';
+      else nextBtn.classList.add('disabled');
+    }
   }
 
   // ---------- Paper filter ----------
