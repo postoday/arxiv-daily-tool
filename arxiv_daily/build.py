@@ -1,4 +1,4 @@
-"""Render static site from data/*.json."""
+"""Render static site from data/daily/YYYY/*.json."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ import config
 
 def _load_all_days(data_dir: Path) -> list[tuple[str, list[dict]]]:
     days = []
-    for f in sorted(data_dir.glob("*.json"), reverse=True):
+    for f in sorted(data_dir.glob("daily/**/*.json"), reverse=True):
         with f.open() as fp:
             payload = json.load(fp)
         papers = payload.get("papers", payload) if isinstance(payload, dict) else payload

@@ -14,9 +14,13 @@ from arxiv_daily.figures import extract_figures
 from arxiv_daily.translate import translate_abstracts
 
 
+def _json_path(date_key: str) -> Path:
+    return config.DATA_DIR / "daily" / date_key[:4] / f"{date_key}.json"
+
+
 def _save(date_key: str, papers: list[dict], stats) -> Path:
-    config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-    out = config.DATA_DIR / f"{date_key}.json"
+    out = _json_path(date_key)
+    out.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "date": date_key,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -61,9 +65,9 @@ def cmd_translate(args) -> None:
     """Translate existing JSON data files without re-fetching."""
     date_key = args.date
     if date_key:
-        files = [config.DATA_DIR / f"{date_key}.json"]
+        files = [_json_path(date_key)]
     else:
-        files = sorted(config.DATA_DIR.glob("*.json"))
+        files = sorted(config.DATA_DIR.glob("daily/**/*.json"))
 
     for f in files:
         if not f.exists():
@@ -81,9 +85,9 @@ def cmd_extract_figures(args) -> None:
     """Extract HTML figures from existing JSON data files."""
     date_key = args.date
     if date_key:
-        files = [config.DATA_DIR / f"{date_key}.json"]
+        files = [_json_path(date_key)]
     else:
-        files = sorted(config.DATA_DIR.glob("*.json"))
+        files = sorted(config.DATA_DIR.glob("daily/**/*.json"))
 
     for f in files:
         if not f.exists():
