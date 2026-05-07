@@ -12,6 +12,11 @@
         {{ category_labels.get(cat, cat) }}<span class="tab-code">{{ cat }}</span>
       </button>
     {% endfor %}
+    {% if selected_data %}
+      <button class="tab tab-selected" data-cat="__selected__">
+        Selected<span class="tab-code">精选</span>
+      </button>
+    {% endif %}
   </div>
 
   <div class="controls">
@@ -67,3 +72,53 @@
     <li class="empty">No papers for this day.</li>
   {% endfor %}
 </ul>
+
+{% if selected_data %}
+<div id="selected-panel" class="hidden">
+  <p class="sel-meta">从 {{ selected_data.total_candidates }} 篇中精选</p>
+  {% for cat in selected_data.categories %}
+  <div class="sel-category">
+    <h3 class="sel-cat-name">{{ cat.name }}</h3>
+    <ul class="sel-paper-list">
+      {% for p in cat.papers %}
+      <li class="sel-paper">
+        <div class="sel-header">
+          <span class="sel-score">{{ p.score }}</span>
+          <div class="sel-titles">
+            <h2 class="paper-title"><a href="{{ p.abs_url }}" target="_blank" rel="noopener">{{ p.title }}</a></h2>
+            {% if p.title_zh %}<p class="paper-title-zh">{{ p.title_zh }}</p>{% endif %}
+          </div>
+        </div>
+        <p class="sel-reason">{{ p.reason_zh }}</p>
+        <div class="sel-tags">{% for tag in p.tags %}<span class="sel-tag">{{ tag }}</span>{% endfor %}</div>
+        <div class="paper-meta">
+          <span class="authors">{{ p.authors|join(", ") }}</span>
+        </div>
+        <p class="paper-abstract">{{ p.abstract_zh if p.abstract_zh else p.abstract }}</p>
+        {% if p.abstract_zh %}
+        <details class="abstract-en">
+          <summary>Show English abstract</summary>
+          <p>{{ p.abstract }}</p>
+        </details>
+        {% endif %}
+        <div class="paper-actions">
+          <a href="{{ p.pdf_url }}" target="_blank" rel="noopener">PDF</a>
+          <a href="{{ p.abs_url }}" target="_blank" rel="noopener">Abs</a>
+          {% if p.html_url %}<a class="html" href="{{ p.html_url }}" target="_blank" rel="noopener">HTML</a>{% endif %}
+          {% for link in p.code_links %}<a class="code" href="{{ link }}" target="_blank" rel="noopener">Code</a>{% endfor %}
+          {% for link in p.project_links %}<a class="project" href="{{ link }}" target="_blank" rel="noopener">Project</a>{% endfor %}
+        </div>
+        {% if p.figures %}
+        <div class="paper-figures">
+          {% for fig in p.figures %}
+            <a href="{{ fig }}" target="_blank" rel="noopener"><img src="{{ fig }}" loading="lazy" alt="Figure"></a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

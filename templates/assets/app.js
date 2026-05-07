@@ -83,8 +83,10 @@
   const searchInput = document.getElementById('search');
   const chipsRoot = document.getElementById('chips');
   const countBadge = document.getElementById('count-badge');
+  const paperList = document.getElementById('paper-list');
+  const controls = document.querySelector('.controls');
+  const selectedPanel = document.getElementById('selected-panel');
   const papers = Array.from(document.querySelectorAll('.paper'));
-  if (!papers.length) return;
 
   // Single-select: always exactly one active tab
   let activeCat = chipsRoot?.querySelector('.tab.active')?.dataset?.cat || '';
@@ -110,18 +112,28 @@
     updateCount();
   }
 
+  function showSelectedPanel(on) {
+    paperList?.classList.toggle('hidden', on);
+    controls?.classList.toggle('hidden', on);
+    selectedPanel?.classList.toggle('hidden', !on);
+  }
+
   chipsRoot?.addEventListener('click', (e) => {
     const tab = e.target.closest('.tab');
     if (!tab) return;
-    // Deselect all, activate clicked
     chipsRoot.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     activeCat = tab.dataset.cat;
-    applyFilter();
+    if (activeCat === '__selected__') {
+      showSelectedPanel(true);
+    } else {
+      showSelectedPanel(false);
+      applyFilter();
+    }
   });
 
   searchInput?.addEventListener('input', applyFilter);
 
-  // Init count
-  applyFilter();
+  // Init
+  if (papers.length) applyFilter();
 })();

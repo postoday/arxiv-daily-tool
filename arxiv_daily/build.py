@@ -27,6 +27,14 @@ def _all_categories(papers: list[dict]) -> list[str]:
     return list(config.CATEGORIES)
 
 
+def _load_selected(data_dir: Path, date: str) -> dict | None:
+    p = data_dir / "selected" / date[:4] / f"selected_{date}.json"
+    if not p.exists():
+        return None
+    with p.open() as f:
+        return json.load(f)
+
+
 def build_site(data_dir: Path | None = None, site_dir: Path | None = None) -> Path:
     data_dir = data_dir or config.DATA_DIR
     site_dir = site_dir or config.SITE_DIR
@@ -63,6 +71,7 @@ def build_site(data_dir: Path | None = None, site_dir: Path | None = None) -> Pa
             "archive_dates": archive_dates,
             "generated_at": generated_at,
             "asset_prefix": asset_prefix,
+            "selected_data": _load_selected(data_dir, date),
         }
 
     # index = latest day
