@@ -53,7 +53,8 @@
       calRoot.innerHTML = h;
 
       calRoot.querySelectorAll('.cal-nav').forEach(b => {
-        b.addEventListener('click', () => {
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
           vM += parseInt(b.dataset.d);
           if (vM < 0)  { vM = 11; vY--; }
           if (vM > 11) { vM = 0;  vY++; }
