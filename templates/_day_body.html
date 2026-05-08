@@ -12,7 +12,7 @@
         {{ category_labels.get(cat, cat) }}<span class="tab-code">{{ cat }}</span>
       </button>
     {% endfor %}
-    <button class="tab tab-selected" data-cat="__selected__">
+    <button class="tab tab-selected{% if selected_data %} has-selected{% endif %}" data-cat="__selected__">
       Selected<span class="tab-code">精选</span>
     </button>
   </div>
@@ -73,15 +73,17 @@
 
 <div id="selected-panel" class="hidden">
   {% if selected_data %}
-  <p class="sel-meta">从 {{ selected_data.total_candidates }} 篇中精选</p>
+  {% set ns = namespace(total=0) %}
+  {% for cat in selected_data.categories %}{% set ns.total = ns.total + cat.papers|length %}{% endfor %}
+  <p class="sel-meta">从 {{ selected_data.total_candidates }} 篇中精选 {{ ns.total }} 篇</p>
   {% for cat in selected_data.categories %}
   <div class="sel-category">
-    <h3 class="sel-cat-name">{{ cat.name }}</h3>
+    <h3 class="sel-cat-name">{{ cat.name }}<span class="sel-cat-count">（{{ cat.papers|length }}）</span></h3>
     <ul class="sel-paper-list">
       {% for p in cat.papers %}
       <li class="sel-paper">
         <div class="sel-header">
-          <span class="sel-score">{{ p.score }}</span>
+          <span class="sel-score">{{ loop.index }}/{{ cat.papers|length }}</span>
           <div class="sel-titles">
             <h2 class="paper-title"><a href="{{ p.abs_url }}" target="_blank" rel="noopener">{{ p.title }}</a></h2>
             {% if p.title_zh %}<p class="paper-title-zh">{{ p.title_zh }}</p>{% endif %}
