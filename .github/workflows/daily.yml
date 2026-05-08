@@ -30,7 +30,12 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Fetch and translate
-        run: python run.py --fetch-only --data-dir _site_repo/data --site-dir _site_repo
+        uses: nick-invision/retry@v3
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_wait_seconds: 60
+          command: python run.py --fetch-only --data-dir _site_repo/data --site-dir _site_repo
 
       - name: Extract figures, HTML links, and affiliations
         run: python run.py --extract-figures --fetch-only --data-dir _site_repo/data --site-dir _site_repo
