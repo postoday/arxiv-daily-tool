@@ -10,6 +10,7 @@ Historical (fetch_for_date):
 
 from __future__ import annotations
 
+import random
 import re
 import time
 from dataclasses import dataclass
@@ -51,20 +52,31 @@ def _ids_from_rss(category: str) -> list[str]:
 
 # --- Atom API helpers ---
 
+def _get_with_retry(url: str, max_retries: int = 4) -> requests.Response:
+    """GET with exponential backoff on 429."""
+    for attempt in range(max_retries + 1):
+        resp = requests.get(url, timeout=30)
+        if resp.status_code == 429 and attempt < max_retries:
+            delay = 5 * (2**attempt) + random.uniform(0, 5)
+            time.sleep(delay)
+            continue
+        resp.raise_for_status()
+        return resp
+
+
 def _fetch_atom_batch(arxiv_ids: list[str]) -> list:
-    """Fetch full Atom entries for a list of arxiv IDs (max ~100 per call)."""
+    """Fetch full Atom entries for a list of arxiv IDs (max ~50 per call)."""
     all_entries = []
-    batch_size = 100
+    batch_size = 50
     for i in range(0, len(arxiv_ids), batch_size):
         batch = arxiv_ids[i : i + batch_size]
         params = {"id_list": ",".join(batch), "max_results": len(batch)}
         url = f"{config.ARXIV_API}?{urlencode(params)}"
-        resp = requests.get(url, timeout=30)
-        resp.raise_for_status()
+        resp = _get_with_retry(url)
         feed = feedparser.parse(resp.content)
         all_entries.extend(feed.entries)
         if i + batch_size < len(arxiv_ids):
-            time.sleep(config.REQUEST_DELAY_SECONDS)
+            time.sleep(config.REQUEST_DELAY_SECONDS + random.uniform(1, 4))
     return all_entries
 
 
@@ -138,7 +150,7 @@ def _submission_window(announce_date: _date) -> tuple[str, str]:
 
 
 def _search_atom(search_query: str, max_results: int) -> list:
-    """Paginated Atom search."""
+    """Paginated Atom search with retry on 429."""
     all_entries: list = []
     batch_size = 100
     for start in range(0, max_results, batch_size):
@@ -150,15 +162,14 @@ def _search_atom(search_query: str, max_results: int) -> list:
             "sortOrder": "descending",
         }
         url = f"{config.ARXIV_API}?{urlencode(params)}"
-        resp = requests.get(url, timeout=30)
-        resp.raise_for_status()
+        resp = _get_with_retry(url)
         feed = feedparser.parse(resp.content)
         entries = feed.entries
         all_entries.extend(entries)
         if len(entries) < batch_size:
             break
         if start + batch_size < max_results:
-            time.sleep(config.REQUEST_DELAY_SECONDS)
+            time.sleep(config.REQUEST_DELAY_SECONDS + random.uniform(1, 4))
     return all_entries
 
 
@@ -176,7 +187,7 @@ def fetch_for_date(
 
     for i, cat in enumerate(categories):
         if i > 0:
-            time.sleep(config.REQUEST_DELAY_SECONDS)
+            time.sleep(config.REQUEST_DELAY_SECONDS + random.uniform(1, 4))
         query = f"cat:{cat} AND submittedDate:[{from_str} TO {to_str}]"
         entries = _search_atom(query, config.MAX_RESULTS_PER_CATEGORY)
         cat_ids: list[str] = []
@@ -222,7 +233,7 @@ def fetch_daily(
     stats: list[FetchStats] = []
     for i, cat in enumerate(categories):
         if i > 0:
-            time.sleep(config.REQUEST_DELAY_SECONDS)
+            time.sleep(config.REQUEST_DELAY_SECONDS + random.uniform(1, 4))
         ids = _ids_from_rss(cat)
         for arxiv_id in ids:
             id_to_cats.setdefault(arxiv_id, [])
@@ -235,7 +246,7 @@ def fetch_daily(
 
     # Step 2: batch-fetch full metadata from Atom API
     unique_ids = list(id_to_cats.keys())
-    time.sleep(config.REQUEST_DELAY_SECONDS)
+    time.sleep(config.REQUEST_DELAY_SECONDS + random.uniform(1, 4))
     entries = _fetch_atom_batch(unique_ids)
 
     # Step 3: normalize
