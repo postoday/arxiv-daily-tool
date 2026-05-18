@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '0 2 * * 1-5'  # 2 AM UTC, Mon–Fri
   workflow_dispatch:
+    inputs:
+      retry_remaining:
+        description: 'Remaining delayed retry attempts (internal, set by retry.yml)'
+        required: false
+        default: '5'
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
 
 jobs:
   update:
@@ -29,13 +38,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Fetch and translate
+      - name: Fetch
+        uses: nick-invision/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_wait_seconds: 60
+          command: python run.py --fetch-only --skip-translate --data-dir _site_repo/data --site-dir _site_repo
+
+      - name: Translate
         uses: nick-invision/retry@v3
         with:
           timeout_minutes: 30
           max_attempts: 3
-          retry_wait_seconds: 60
-          command: python run.py --fetch-only --data-dir _site_repo/data --site-dir _site_repo
+          retry_wait_seconds: 120
+          command: python run.py --translate-only --fetch-only --data-dir _site_repo/data --site-dir _site_repo
 
       - name: Extract figures, HTML links, and affiliations
         run: python run.py --extract-figures --fetch-only --data-dir _site_repo/data --site-dir _site_repo
@@ -52,3 +69,17 @@ jobs:
           git diff --staged --quiet && echo "No changes to commit." && exit 0
           git commit -m "chore: update $(date -u +%Y-%m-%d)"
           git push
+
+      - name: Schedule retry on failure
+        if: failure()
+        run: |
+          REMAINING="${{ inputs.retry_remaining || '5' }}"
+          echo "Remaining retries: $REMAINING"
+          if [ "$REMAINING" -gt 0 ]; then
+            gh workflow run retry.yml -f remaining_attempts="$REMAINING"
+            echo "Delayed retry scheduled (${REMAINING} attempts left)."
+          else
+            echo "No retries remaining. Giving up."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.SITE_DEPLOY_TOKEN }}

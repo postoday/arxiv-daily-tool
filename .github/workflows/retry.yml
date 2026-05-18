@@ -1,0 +1,29 @@
+name: Delayed Retry
+
+on:
+  workflow_dispatch:
+    inputs:
+      remaining_attempts:
+        description: 'Number of retry attempts remaining'
+        required: true
+        default: '5'
+
+jobs:
+  wait-and-retrigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait 1 hour
+        run: sleep 3600
+
+      - name: Retrigger daily workflow
+        run: |
+          IN_PROGRESS=$(gh run list --workflow=daily.yml --status=in_progress --json databaseId --jq 'length')
+          if [ "$IN_PROGRESS" -gt 0 ]; then
+            echo "A daily workflow is still running ($IN_PROGRESS in-progress run(s)). Skipping retry."
+            exit 0
+          fi
+          NEXT=$((${{ inputs.remaining_attempts }} - 1))
+          echo "Remaining after this retry: $NEXT"
+          gh workflow run daily.yml -f retry_remaining="$NEXT"
+        env:
+          GH_TOKEN: ${{ secrets.SITE_DEPLOY_TOKEN }}
