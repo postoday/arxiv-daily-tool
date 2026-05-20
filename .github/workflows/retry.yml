@@ -26,4 +26,4 @@ jobs:
           echo "Remaining after this retry: $NEXT"
           gh workflow run daily.yml -f retry_remaining="$NEXT"
         env:
-          GH_TOKEN: ${{ secrets.SITE_DEPLOY_TOKEN }}
+          GH_TOKEN: ${{ github.token }}

@@ -82,4 +82,4 @@ jobs:
             echo "No retries remaining. Giving up."
           fi
         env:
-          GH_TOKEN: ${{ secrets.SITE_DEPLOY_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
