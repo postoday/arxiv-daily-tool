@@ -14,6 +14,10 @@ concurrency:
   group: daily-update
   cancel-in-progress: false
 
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   update:
     runs-on: ubuntu-latest

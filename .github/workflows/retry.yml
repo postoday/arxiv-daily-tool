@@ -8,6 +8,10 @@ on:
         required: true
         default: '5'
 
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   wait-and-retrigger:
     runs-on: ubuntu-latest
