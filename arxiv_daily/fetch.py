@@ -52,23 +52,34 @@ def _ids_from_rss(category: str) -> list[str]:
 
 # --- Atom API helpers ---
 
-def _get_with_retry(url: str, max_retries: int = 4) -> requests.Response:
+HEADERS = {"User-Agent": "arxiv-daily-tool/1.0 (mailto:postoday@example.com)"}
+
+
+def _get_with_retry(url: str, max_retries: int = 6) -> requests.Response:
     """GET with exponential backoff on 429 and connection/timeout errors."""
     last_exc = None
     for attempt in range(max_retries + 1):
         try:
-            resp = requests.get(url, timeout=30)
+            resp = requests.get(url, timeout=60, headers=HEADERS)
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
             last_exc = e
             if attempt < max_retries:
-                delay = 5 * (2**attempt) + random.uniform(0, 5)
-                print(f"  [retry] {type(e).__name__} on {url[:80]}, attempt {attempt+1}/{max_retries+1}, "
+                delay = 10 * (2**attempt) + random.uniform(0, 10)
+                print(f"  [retry] {type(e).__name__}, attempt {attempt+1}/{max_retries+1}, "
                       f"waiting {delay:.1f}s")
                 time.sleep(delay)
                 continue
             raise
         if resp.status_code == 429 and attempt < max_retries:
-            delay = 5 * (2**attempt) + random.uniform(0, 5)
+            retry_after = resp.headers.get("Retry-After")
+            if retry_after is not None:
+                try:
+                    delay = float(retry_after) + random.uniform(0, 5)
+                except ValueError:
+                    delay = 10 * (2**attempt) + random.uniform(0, 10)
+            else:
+                delay = 10 * (2**attempt) + random.uniform(0, 10)
+            print(f"  [retry] 429, attempt {attempt+1}/{max_retries+1}, waiting {delay:.1f}s")
             time.sleep(delay)
             continue
         resp.raise_for_status()
@@ -79,7 +90,7 @@ def _get_with_retry(url: str, max_retries: int = 4) -> requests.Response:
 def _fetch_atom_batch(arxiv_ids: list[str]) -> list:
     """Fetch full Atom entries for a list of arxiv IDs (max ~50 per call)."""
     all_entries = []
-    batch_size = 50
+    batch_size = 30
     for i in range(0, len(arxiv_ids), batch_size):
         batch = arxiv_ids[i : i + batch_size]
         params = {"id_list": ",".join(batch), "max_results": len(batch)}

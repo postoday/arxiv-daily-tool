@@ -16,7 +16,7 @@ CATEGORY_LABELS = {
 }
 
 MAX_RESULTS_PER_CATEGORY = 300
-REQUEST_DELAY_SECONDS = 3
+REQUEST_DELAY_SECONDS = 10
 WINDOW_HOURS = 24
 
 ROOT = Path(__file__).resolve().parent
@@ -24,7 +24,7 @@ DATA_DIR = Path(os.environ.get("ARXIV_DATA_DIR", ROOT / "data"))
 SITE_DIR = Path(os.environ.get("ARXIV_SITE_DIR", ROOT / "site"))
 TEMPLATES_DIR = ROOT / "templates"
 
-ARXIV_API = "http://export.arxiv.org/api/query"
+ARXIV_API = "https://export.arxiv.org/api/query"
 
 # --- Translation ---
 TRANSLATE_BATCH_SIZE = 20  # texts per Google Translate call
