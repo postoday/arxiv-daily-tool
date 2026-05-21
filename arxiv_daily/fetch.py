@@ -53,15 +53,27 @@ def _ids_from_rss(category: str) -> list[str]:
 # --- Atom API helpers ---
 
 def _get_with_retry(url: str, max_retries: int = 4) -> requests.Response:
-    """GET with exponential backoff on 429."""
+    """GET with exponential backoff on 429 and connection/timeout errors."""
+    last_exc = None
     for attempt in range(max_retries + 1):
-        resp = requests.get(url, timeout=30)
+        try:
+            resp = requests.get(url, timeout=30)
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            last_exc = e
+            if attempt < max_retries:
+                delay = 5 * (2**attempt) + random.uniform(0, 5)
+                print(f"  [retry] {type(e).__name__} on {url[:80]}, attempt {attempt+1}/{max_retries+1}, "
+                      f"waiting {delay:.1f}s")
+                time.sleep(delay)
+                continue
+            raise
         if resp.status_code == 429 and attempt < max_retries:
             delay = 5 * (2**attempt) + random.uniform(0, 5)
             time.sleep(delay)
             continue
         resp.raise_for_status()
         return resp
+    raise last_exc  # type: ignore[return-value]
 
 
 def _fetch_atom_batch(arxiv_ids: list[str]) -> list:
