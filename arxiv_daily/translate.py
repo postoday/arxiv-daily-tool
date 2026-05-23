@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 import time
 
 from deep_translator import GoogleTranslator
@@ -43,6 +44,7 @@ def translate_abstracts(papers: list[dict]) -> list[dict]:
     return papers
 
 
+
 def _batch_translate(
     translator: GoogleTranslator,
     papers: list[dict],
@@ -58,25 +60,7 @@ def _batch_translate(
         batch_idx = indices[start : start + batch_size]
         texts = [papers[i][src_field] for i in batch_idx]
 
-        try:
-            results = translator.translate_batch(texts)
-        except Exception as exc:
-            print(f"  Translation error (batch {start}): {exc}")
-            # fall back to one-by-one for this batch with retry
-            results = []
-            for t in texts:
-                for attempt in range(3):
-                    try:
-                        results.append(translator.translate(t))
-                        break
-                    except KeyboardInterrupt:
-                        raise
-                    except Exception:
-                        if attempt < 2:
-                            time.sleep(2 * (attempt + 1))
-                        else:
-                            results.append(None)
-                            break
+        results = _batch_translate_with_retry(translator, texts)
 
         for idx, zh in zip(batch_idx, results):
             if zh:
@@ -84,10 +68,44 @@ def _batch_translate(
                 translated += 1
 
         if start + batch_size < len(indices):
-            time.sleep(1)
+            time.sleep(1 + random.uniform(0, 2))
 
         done = min(start + batch_size, len(indices))
         print(f"  [{done}/{len(indices)}]", end="\r")
 
     print(f"  Translated {translated}/{len(indices)}.")
     return translated
+
+
+def _batch_translate_with_retry(
+    translator: GoogleTranslator, texts: list[str], max_retries: int = 3
+) -> list[str | None]:
+    """Translate batch with retry on network errors, fall back to one-by-one."""
+    for attempt in range(max_retries + 1):
+        try:
+            return translator.translate_batch(texts)
+        except KeyboardInterrupt:
+            raise
+        except Exception as exc:
+            if attempt < max_retries:
+                delay = 5 * (2**attempt) + random.uniform(0, 5)
+                print(f"\n  Translation batch retry {attempt+1}/{max_retries} after {delay:.1f}s: {exc}")
+                time.sleep(delay)
+            else:
+                print(f"\n  Batch translation failed, falling back to one-by-one: {exc}")
+
+    # fallback: one-by-one with retry
+    results: list[str | None] = []
+    for t in texts:
+        result = None
+        for attempt in range(3):
+            try:
+                result = translator.translate(t)
+                break
+            except KeyboardInterrupt:
+                raise
+            except Exception:
+                if attempt < 2:
+                    time.sleep(3 * (attempt + 1) + random.uniform(0, 2))
+        results.append(result)
+    return results
