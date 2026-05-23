@@ -44,7 +44,6 @@ def translate_abstracts(papers: list[dict]) -> list[dict]:
     return papers
 
 
-
 def _batch_translate(
     translator: GoogleTranslator,
     papers: list[dict],
