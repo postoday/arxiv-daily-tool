@@ -21,13 +21,13 @@ jobs:
 
       - name: Retrigger daily workflow
         run: |
-          IN_PROGRESS=$(gh run list --workflow=daily.yml --status=in_progress --json databaseId --jq 'length')
+          IN_PROGRESS=$(gh run list --repo postoday/arxiv-daily-tool --workflow=daily.yml --status=in_progress --json databaseId --jq 'length')
           if [ "$IN_PROGRESS" -gt 0 ]; then
             echo "A daily workflow is still running ($IN_PROGRESS in-progress run(s)). Skipping retry."
             exit 0
           fi
           NEXT=$((${{ inputs.remaining_attempts }} - 1))
           echo "Remaining after this retry: $NEXT"
-          gh workflow run daily.yml -f retry_remaining="$NEXT"
+          gh workflow run --repo postoday/arxiv-daily-tool daily.yml -f retry_remaining="$NEXT"
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}

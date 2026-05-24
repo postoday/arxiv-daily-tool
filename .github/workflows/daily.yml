@@ -80,7 +80,7 @@ jobs:
           REMAINING="${{ inputs.retry_remaining || '5' }}"
           echo "Remaining retries: $REMAINING"
           if [ "$REMAINING" -gt 0 ]; then
-            gh workflow run retry.yml -f remaining_attempts="$REMAINING"
+            gh workflow run --repo postoday/arxiv-daily-tool retry.yml -f remaining_attempts="$REMAINING"
             echo "Delayed retry scheduled (${REMAINING} attempts left)."
           else
             echo "No retries remaining. Giving up."
