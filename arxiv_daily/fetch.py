@@ -34,7 +34,7 @@ class FetchStats:
 
 def _ids_from_rss(category: str) -> list[str]:
     """Return today's announced paper IDs (new + cross-list) from RSS."""
-    url = f"http://export.arxiv.org/rss/{category}"
+    url = f"https://rss.arxiv.org/rss/{category}"
     feed = feedparser.parse(url)
     ids = []
     for entry in feed.entries:
