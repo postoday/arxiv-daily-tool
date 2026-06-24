@@ -18,6 +18,8 @@ def _load_all_days(data_dir: Path) -> list[tuple[str, list[dict]]]:
         with f.open() as fp:
             payload = json.load(fp)
         papers = payload.get("papers", payload) if isinstance(payload, dict) else payload
+        if not papers:
+            continue
         days.append((f.stem, papers))
     return days
 
