@@ -152,10 +152,57 @@ def _normalize(entry, announced_in: list[str]) -> dict:
 
 # --- Atom search helpers (for historical dates) ---
 
+# arXiv observes US federal holidays (no announcements on these days).
+# Update this set annually; holidays that fall on weekends move to observed weekday.
+_ARXIV_HOLIDAYS: set[_date] = {
+    # --- 2025 ---
+    _date(2025, 1, 1),   # New Year's Day (Wed)
+    _date(2025, 1, 20),  # MLK Day (Mon)
+    _date(2025, 2, 17),  # Presidents' Day (Mon)
+    _date(2025, 5, 26),  # Memorial Day (Mon)
+    _date(2025, 6, 19),  # Juneteenth (Thu)
+    _date(2025, 7, 4),   # Independence Day (Fri)
+    _date(2025, 9, 1),   # Labor Day (Mon)
+    _date(2025, 10, 13), # Columbus Day (Mon)
+    _date(2025, 11, 11), # Veterans Day (Tue)
+    _date(2025, 11, 27), # Thanksgiving (Thu)
+    _date(2025, 12, 25), # Christmas (Thu)
+    # --- 2026 ---
+    _date(2026, 1, 1),   # New Year's Day (Thu)
+    _date(2026, 1, 19),  # MLK Day (Mon)
+    _date(2026, 2, 16),  # Presidents' Day (Mon)
+    _date(2026, 5, 25),  # Memorial Day (Mon)
+    _date(2026, 6, 19),  # Juneteenth (Fri)
+    _date(2026, 7, 3),   # Independence Day observed (Sat Jul 4 to Fri Jul 3)
+    _date(2026, 9, 7),   # Labor Day (Mon)
+    _date(2026, 10, 12), # Columbus Day (Mon)
+    _date(2026, 11, 11), # Veterans Day (Wed)
+    _date(2026, 11, 26), # Thanksgiving (Thu)
+    _date(2026, 12, 25), # Christmas (Fri)
+    # --- 2027 ---
+    _date(2027, 1, 1),   # New Year's Day (Fri)
+    _date(2027, 1, 18),  # MLK Day (Mon)
+    _date(2027, 2, 15),  # Presidents' Day (Mon)
+    _date(2027, 5, 31),  # Memorial Day (Mon)
+    _date(2027, 6, 18),  # Juneteenth observed (Sat Jun 19 to Fri Jun 18)
+    _date(2027, 7, 5),   # Independence Day observed (Sun Jul 4 to Mon Jul 5)
+    _date(2027, 9, 6),   # Labor Day (Mon)
+    _date(2027, 10, 11), # Columbus Day (Mon)
+    _date(2027, 11, 11), # Veterans Day (Thu)
+    _date(2027, 11, 25), # Thanksgiving (Thu)
+    _date(2027, 12, 24), # Christmas observed (Sat Dec 25 to Fri Dec 24)
+}
+
+
+def _is_arxiv_off(d: _date) -> bool:
+    """Return True if arXiv is closed on *d* (weekend or US federal holiday)."""
+    return d.weekday() >= 5 or d in _ARXIV_HOLIDAYS
+
+
 def _prev_business_day(d: _date) -> _date:
     """Return the most recent business day strictly before *d*."""
     d = d - timedelta(days=1)
-    while d.weekday() >= 5:  # skip Sat/Sun
+    while _is_arxiv_off(d):
         d = d - timedelta(days=1)
     return d
 
