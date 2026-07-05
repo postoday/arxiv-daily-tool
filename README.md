@@ -1,6 +1,6 @@
 # arxiv-daily-tool
 
-A Python CLI that fetches arXiv papers, translates abstracts to Chinese, extracts figures, and builds a static website — then pushes the result to a GitHub Pages site repo ([arxiv-daily](https://github.com/postoday/arxiv-daily)).
+A Python CLI that fetches arXiv papers, translates abstracts to Chinese, extracts figures, indexes generated blog articles, and builds a static website — then pushes the result to a GitHub Pages site repo ([arxiv-daily](https://github.com/postoday/arxiv-daily)).
 
 ## How it works
 
@@ -8,7 +8,7 @@ A Python CLI that fetches arXiv papers, translates abstracts to Chinese, extract
 fetch (arXiv RSS + Atom API)
   → translate (Google Translate via deep-translator)
   → extract figures (arXiv HTML pages)
-  → build (Jinja2 → static HTML)
+  → build (Jinja2 → static HTML + blog index)
   → push to arxiv-daily repo (via GitHub Actions)
 ```
 
@@ -38,6 +38,8 @@ python run.py --extract-figures
 
 By default, data is saved to `./data/` and the site is built into `./site/`. Override with `--data-dir` / `--site-dir` flags or the `ARXIV_DATA_DIR` / `ARXIV_SITE_DIR` environment variables.
 
+Generated blog articles are read from `../blogs/` by default, or from `ARXIV_BLOGS_DIR` when set. Files matching `*-blog.html` are copied into `site/blogs/`, indexed by category, and linked from the main site.
+
 ## Configuration
 
 Edit `config.py` to change tracked categories, translation language, batch sizes, etc.
@@ -48,6 +50,9 @@ Edit `config.py` to change tracked categories, translation language, batch sizes
 | `TRANSLATE_TARGET_LANG` | `"zh-CN"` | Translation target language |
 | `MAX_RESULTS_PER_CATEGORY` | `300` | Max papers per category |
 | `WINDOW_HOURS` | `24` | Lookback window for historical fetch |
+| `BLOGS_DIR` | `../blogs` | Source directory for generated `*-blog.html` articles |
+| `BLOG_CATEGORIES` | `Generation`, `3D`, `AD&Robot`, `VLM` | Blog category pages |
+| `BLOG_CATEGORY_ASSIGNMENTS` | `{}` plus local mappings | Explicit multi-category blog placement by arXiv ID |
 
 ## Preview locally
 
@@ -89,4 +94,5 @@ arxiv_daily/
 templates/        — HTML templates and CSS/JS assets
 config.py         — central configuration
 run.py            — CLI entrypoint
+../blogs/         — optional generated blog HTML source
 ```

@@ -2,12 +2,12 @@
 
 ## 概述
 
-arxiv-daily-tool 是一个 Python CLI 工具，自动抓取 arXiv 每日论文、翻译摘要为中文、提取图表信息，并构建静态网站。生成的静态网站通过 GitHub Actions 部署到 [arxiv-daily](https://github.com/postoday/arxiv-daily) GitHub Pages。
+arxiv-daily-tool 是一个 Python CLI 工具，自动抓取 arXiv 每日论文、翻译摘要为中文、提取图表信息、索引生成的博客文章，并构建静态网站。生成的静态网站通过 GitHub Actions 部署到 [arxiv-daily](https://github.com/postoday/arxiv-daily) GitHub Pages。
 
 ## 流水线总览
 
 ```
-fetch (RSS + Atom API) → translate (Google Translate) → figures (arXiv HTML) → build (Jinja2 → HTML)
+fetch (RSS + Atom API) → translate (Google Translate) → figures (arXiv HTML) → build (Jinja2 → HTML + blogs)
 ```
 
 四个阶段是**线性依赖**的，每个阶段将数据持久化为 JSON 中间文件，允许单独执行或从任意阶段恢复。
@@ -142,7 +142,7 @@ fetch (RSS + Atom API) → translate (Google Translate) → figures (arXiv HTML)
 
 ---
 
-## 第四阶段：build（静态网站构建）
+## 第四阶段：build（静态网站与博客索引构建）
 
 **模块**: [arxiv_daily/build.py](../arxiv_daily/build.py)
 
@@ -151,7 +151,9 @@ fetch (RSS + Atom API) → translate (Google Translate) → figures (arXiv HTML)
 1. 从 `data/daily/**/*.json` 加载所有日期的论文数据（按日期倒序）
 2. 从 `data/selected/` 加载精选论文数据（如存在）
 3. 将 `templates/assets/` 复制到输出目录
-4. 使用 Jinja2 渲染 HTML 页面
+4. 从 `BLOGS_DIR`（默认 `../blogs/`）和现有 `site/blogs/` 扫描 `*-blog.html`
+5. 复制博客详情页到 `site/blogs/`，抽取标题、摘要、arXiv ID、首图缩略图
+6. 使用 Jinja2 渲染 HTML 页面
 
 ### 页面结构
 
@@ -159,8 +161,9 @@ fetch (RSS + Atom API) → translate (Google Translate) → figures (arXiv HTML)
 |------|------|------|
 | 首页 | `index.html` | `site/index.html` — 展示最新日期数据 |
 | 每日归档 | `day.html` | `site/archive/YYYY-MM-DD.html` — 展示特定日期 |
+| 博客分类 | `blogs.html` | `site/blogs/index.html` 与 `site/blogs/{category}.html` — 卡片式展示博客 |
 
-两者均包含 `_day_body.html` 模板片段，核心展示逻辑一致。
+首页和每日归档均包含 `_day_body.html` 模板片段，核心展示逻辑一致。博客详情页是生成工具产出的 standalone HTML，构建时原样复制到 `site/blogs/`。
 
 ### 前端交互
 
@@ -185,6 +188,16 @@ fetch (RSS + Atom API) → translate (Google Translate) → figures (arXiv HTML)
 | `generated_at` | 生成时间戳 |
 | `asset_prefix` | 资源路径前缀（首页 `.`，归档页 `..`） |
 | `selected_data` | 精选论文结构 |
+
+### 博客索引
+
+博客源文件命名约定为 `*-blog.html`，例如 `2606.27504-blog.html`。构建器会：
+
+- 从文件名或 arXiv 链接解析论文 ID
+- 从 `<h1>` / `<title>` 和首段正文抽取卡片标题与摘要
+- 将首个图片提取为 `site/blogs/assets/{slug}-hero.*` 作为卡片图
+- 根据 `config.BLOG_CATEGORY_ASSIGNMENTS` 显式分类；未配置时按关键词归入 `Generation`、`3D`、`AD&Robot`、`VLM`
+- 同一篇文章可出现在多个分类页面中
 
 ---
 

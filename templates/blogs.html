@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}arXiv Daily Blogs — {{ active_category.name }}{% endblock %}
+{% block content %}
+<section class="blog-head">
+  <div class="blog-title-row view-switch-title">
+    <a class="view-switch-item view-switch-link" href="../index.html">{{ latest_date }}</a>
+    <span class="view-switch-item active">Blogs</span>
+  </div>
+
+  <div class="blog-tabs" aria-label="Blog categories">
+    {% for cat in blog_categories %}
+      <a class="blog-tab {% if cat.slug == active_category.slug %}active{% endif %}" href="{{ cat.slug }}.html">
+        {{ cat.name }}
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="blog-grid" aria-label="{{ active_category.name }} blogs">
+  {% for post in posts %}
+    <article class="blog-card">
+      {% if post.hero_src %}
+      <a class="blog-thumb" href="{{ post.detail_url }}" aria-label="{{ post.title }}">
+        <img src="{{ post.hero_src }}" loading="lazy" alt="">
+      </a>
+      {% endif %}
+      <div class="blog-card-body">
+        <div class="blog-card-meta">
+          <span>{{ post.arxiv_id }}</span>
+          {% for cat in post.categories %}
+            <span>{{ cat }}</span>
+          {% endfor %}
+        </div>
+        <h2 class="blog-card-title">
+          <a href="{{ post.detail_url }}">{{ post.title }}</a>
+        </h2>
+        <p class="blog-card-excerpt">{{ post.excerpt }}</p>
+        <a class="blog-read-link" href="{{ post.detail_url }}">Read blog</a>
+      </div>
+    </article>
+  {% else %}
+    <div class="blog-empty">
+      <h2>No blogs yet</h2>
+    </div>
+  {% endfor %}
+</section>
+{% endblock %}
