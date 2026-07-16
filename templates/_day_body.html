@@ -1,10 +1,16 @@
 <section class="page-head">
-  <div class="date-row">
-    <a id="date-prev" class="date-nav-btn" aria-label="Previous date">←</a>
-    <h1 class="view-switch-title"><span class="view-switch-item active">{{ date }}</span><button id="cal-toggle" class="cal-toggle" aria-label="Toggle calendar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 1v3M11 1v3M2 7h12"/></svg></button></h1>
-    <a id="date-next" class="date-nav-btn" aria-label="Next date">→</a>
-    <a class="view-switch-item view-switch-link blog-inline-link" href="{{ asset_prefix }}blogs/">Blogs</a>
-    <div id="mini-cal" class="mini-cal"></div>
+  <div class="paper-toolbar">
+    <div class="date-row">
+      <a id="date-prev" class="date-nav-btn" aria-label="Previous date">‹</a>
+      <button id="cal-toggle" class="date-display" type="button" aria-label="Toggle calendar">
+        <span>{{ date }}</span>
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 1v3M11 1v3M2 7h12"/></svg>
+      </button>
+      <a id="date-next" class="date-nav-btn" aria-label="Next date">›</a>
+      <div id="mini-cal" class="mini-cal"></div>
+    </div>
+
+    <a class="blog-jump" href="{{ asset_prefix }}blogs/">Technical Explanations</a>
   </div>
 
   <div class="tabs" id="chips">
@@ -19,14 +25,22 @@
   </div>
 
   <div class="controls">
-    <input type="search" id="search" placeholder="Search title, authors, abstract…" autocomplete="off">
-    <span class="count-badge" id="count-badge"></span>
+    <div class="search-shell">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.7"/><path d="M10.5 10.5 14 14"/></svg>
+      <input type="search" id="search" placeholder="Filter papers by title, authors, or abstract..." autocomplete="off">
+    </div>
+    <span class="count-badge" id="count-badge">0 papers</span>
   </div>
 </section>
 
 <ul class="paper-list" id="paper-list">
   {% for p in papers %}
-    <li class="paper" data-cats="{{ p.primary_category }}">
+    <li class="paper" data-cats="{{ p.categories|join(',') if p.categories else p.primary_category }}">
+      <div class="paper-cats">
+        {% for c in p.categories %}
+          <span class="cat-tag {% if c == p.primary_category %}primary{% endif %}">{{ c }}</span>
+        {% endfor %}
+      </div>
       <h2 class="paper-title">
         <a href="{{ p.abs_url }}" target="_blank" rel="noopener">{{ p.title }}</a>
       </h2>
@@ -35,16 +49,14 @@
         <span class="authors">{{ p.authors|join(", ") }}</span>
         {% if p.affiliations %}<span class="affiliations">{{ p.affiliations|join(" · ") }}</span>{% endif %}
       </div>
-      <div class="paper-cats">
-        {% for c in p.categories %}
-          <span class="cat-tag {% if c == p.primary_category %}primary{% endif %}">{{ c }}</span>
-        {% endfor %}
+      <div class="abstract-box">
+        <p class="paper-abstract">{{ (p.abstract_zh if p.abstract_zh else p.abstract)|replace('\n', ' ')|trim }}</p>
+        <button class="abstract-toggle" type="button" aria-expanded="false">Expand Abstract</button>
       </div>
-      <p class="paper-abstract">{{ p.abstract_zh if p.abstract_zh else p.abstract }}</p>
       {% if p.abstract_zh %}
       <details class="abstract-en">
         <summary>Show English abstract</summary>
-        <p>{{ p.abstract }}</p>
+        <p>{{ p.abstract|replace('\n', ' ')|trim }}</p>
       </details>
       {% endif %}
       {% if p.comments %}<p class="paper-comments">{{ p.comments }}</p>{% endif %}
@@ -76,7 +88,10 @@
   {% if selected_data %}
   {% set ns = namespace(total=0) %}
   {% for cat in selected_data.categories %}{% set ns.total = ns.total + cat.papers|length %}{% endfor %}
-  <p class="sel-meta">从 {{ selected_data.total_candidates }} 篇中精选 {{ ns.total }} 篇</p>
+  <div class="selected-head">
+    <h2>Curated Papers <span>from {{ selected_data.total_candidates }} submissions</span></h2>
+    <span>{{ ns.total }} selected</span>
+  </div>
   {% for cat in selected_data.categories %}
   <div class="sel-category">
     <h3 class="sel-cat-name">{{ cat.name }}<span class="sel-cat-count">（{{ cat.papers|length }}）</span></h3>
@@ -84,7 +99,7 @@
       {% for p in cat.papers %}
       <li class="sel-paper">
         <div class="sel-header">
-          <span class="sel-score">{{ loop.index }}/{{ cat.papers|length }}</span>
+          <span class="sel-score">{{ loop.index }}</span>
           <div class="sel-titles">
             <h2 class="paper-title"><a href="{{ p.abs_url }}" target="_blank" rel="noopener">{{ p.title }}</a></h2>
             {% if p.title_zh %}<p class="paper-title-zh">{{ p.title_zh }}</p>{% endif %}
@@ -95,11 +110,14 @@
         <div class="paper-meta">
           <span class="authors">{{ p.authors|join(", ") }}</span>
         </div>
-        <p class="paper-abstract">{{ p.abstract_zh if p.abstract_zh else p.abstract }}</p>
+        <div class="abstract-box">
+          <p class="paper-abstract">{{ (p.abstract_zh if p.abstract_zh else p.abstract)|replace('\n', ' ')|trim }}</p>
+          <button class="abstract-toggle" type="button" aria-expanded="false">Expand Abstract</button>
+        </div>
         {% if p.abstract_zh %}
         <details class="abstract-en">
           <summary>Show English abstract</summary>
-          <p>{{ p.abstract }}</p>
+          <p>{{ p.abstract|replace('\n', ' ')|trim }}</p>
         </details>
         {% endif %}
         <div class="paper-actions">

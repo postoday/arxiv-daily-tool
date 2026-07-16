@@ -2,9 +2,12 @@
 {% block title %}arXiv Daily Blogs — {{ active_category.name }}{% endblock %}
 {% block content %}
 <section class="blog-head">
-  <div class="blog-title-row view-switch-title">
-    <a class="view-switch-item view-switch-link" href="../index.html">{{ latest_date }}</a>
-    <span class="view-switch-item active">Blogs</span>
+  <div class="blog-title-row">
+    <div>
+      <a class="blog-back-link" href="../index.html">Papers / {{ latest_date }}</a>
+      <h1>Technical Explanations</h1>
+      <p>Long-form notes and generated explanations for papers worth a closer look.</p>
+    </div>
   </div>
 
   <div class="blog-tabs" aria-label="Blog categories">
@@ -35,7 +38,7 @@
           <a href="{{ post.detail_url }}">{{ post.title }}</a>
         </h2>
         <p class="blog-card-excerpt">{{ post.excerpt }}</p>
-        <a class="blog-read-link" href="{{ post.detail_url }}">Read blog</a>
+        <a class="blog-read-link" href="{{ post.detail_url }}">Read technical article</a>
       </div>
     </article>
   {% else %}

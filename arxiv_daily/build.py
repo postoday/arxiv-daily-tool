@@ -332,6 +332,8 @@ def build_site(data_dir: Path | None = None, site_dir: Path | None = None) -> Pa
     env = Environment(
         loader=FileSystemLoader(str(config.TEMPLATES_DIR)),
         autoescape=select_autoescape(["html"]),
+        trim_blocks=True,
+        lstrip_blocks=True,
     )
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 

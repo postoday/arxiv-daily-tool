@@ -1,10 +1,11 @@
 (() => {
   // ---------- Mini calendar ----------
   const calRoot = document.getElementById('mini-cal');
-  const calBtn  = document.getElementById('cal-toggle');
+  const calBtn = document.getElementById('cal-toggle');
   if (calRoot && calBtn) {
     // Toggle open/close
-    calBtn.addEventListener('click', () => {
+    calBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       calRoot.classList.toggle('open');
     });
     // Close when clicking outside
@@ -14,55 +15,55 @@
       }
     });
 
-    const dates = (window.__archiveDates || []);
-    const cur   = window.__currentDate || '';
-    const pfx   = window.__assetPrefix ?? '';
+    const dates = window.__archiveDates || [];
+    const cur = window.__currentDate || '';
+    const pfx = window.__assetPrefix ?? '';
     const dateSet = new Set(dates);
     const ref = cur ? new Date(cur + 'T00:00:00') : new Date();
-    let vY = ref.getFullYear(), vM = ref.getMonth();
+    let vY = ref.getFullYear();
+    let vM = ref.getMonth();
 
-    const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const DOW = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+    const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const DOW = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
-    function draw() {
-      const first  = new Date(vY, vM, 1);
-      const days   = new Date(vY, vM + 1, 0).getDate();
-      const offset = (first.getDay() + 6) % 7;   // Mon=0
+    function drawCalendar() {
+      const first = new Date(vY, vM, 1);
+      const days = new Date(vY, vM + 1, 0).getDate();
+      const offset = (first.getDay() + 6) % 7;
 
-      let h = '<div class="cal-head">'
-        + '<button class="cal-nav" data-d="-1">\u2039</button>'
+      let html = '<div class="cal-head">'
+        + '<button class="cal-nav" data-d="-1" type="button">\u2039</button>'
         + '<span class="cal-title">' + MO[vM] + ' ' + vY + '</span>'
-        + '<button class="cal-nav" data-d="1">\u203A</button></div>'
+        + '<button class="cal-nav" data-d="1" type="button">\u203A</button></div>'
         + '<div class="cal-grid">'
-        + DOW.map(d => '<span class="cal-dow">' + d + '</span>').join('');
+        + DOW.map((d) => '<span class="cal-dow">' + d + '</span>').join('');
 
-      for (let i = 0; i < offset; i++) h += '<span class="cal-day"></span>';
+      for (let i = 0; i < offset; i++) html += '<span class="cal-day"></span>';
 
       for (let d = 1; d <= days; d++) {
         const ds = vY + '-' + String(vM + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-        const avail  = dateSet.has(ds);
+        const avail = dateSet.has(ds);
         const active = ds === cur;
         if (avail) {
-          const href = pfx + 'archive/' + ds + '.html';
-          h += '<a class="cal-day has-data' + (active ? ' active' : '') + '" href="' + href + '">' + d + '</a>';
+          html += '<a class="cal-day has-data' + (active ? ' active' : '') + '" href="' + pfx + 'archive/' + ds + '.html">' + d + '</a>';
         } else {
-          h += '<span class="cal-day">' + d + '</span>';
+          html += '<span class="cal-day">' + d + '</span>';
         }
       }
-      h += '</div>';
-      calRoot.innerHTML = h;
+      html += '</div>';
+      calRoot.innerHTML = html;
 
-      calRoot.querySelectorAll('.cal-nav').forEach(b => {
-        b.addEventListener('click', (e) => {
+      calRoot.querySelectorAll('.cal-nav').forEach((button) => {
+        button.addEventListener('click', (e) => {
           e.stopPropagation();
-          vM += parseInt(b.dataset.d);
-          if (vM < 0)  { vM = 11; vY--; }
-          if (vM > 11) { vM = 0;  vY++; }
-          draw();
+          vM += parseInt(button.dataset.d, 10);
+          if (vM < 0) { vM = 11; vY--; }
+          if (vM > 11) { vM = 0; vY++; }
+          drawCalendar();
         });
       });
     }
-    draw();
+    drawCalendar();
 
     // Prev / next date navigation
     const sorted = [...dates].sort();
@@ -79,6 +80,28 @@
     }
   }
 
+  // ---------- Abstract expand / collapse ----------
+  const abstractToggles = Array.from(document.querySelectorAll('.abstract-toggle'));
+
+  function refreshAbstractToggles(root = document) {
+    root.querySelectorAll('.paper-abstract').forEach((abstract) => {
+      const toggle = abstract.nextElementSibling;
+      if (!toggle || !toggle.classList.contains('abstract-toggle')) return;
+      if (!abstract.offsetParent || abstract.classList.contains('expanded')) return;
+      toggle.classList.toggle('is-hidden', abstract.scrollHeight <= abstract.clientHeight + 2);
+    });
+  }
+
+  abstractToggles.forEach((toggle) => {
+    toggle.addEventListener('click', () => {
+      const abstract = toggle.previousElementSibling;
+      if (!abstract || !abstract.classList.contains('paper-abstract')) return;
+      const expanded = abstract.classList.toggle('expanded');
+      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      toggle.textContent = expanded ? 'Collapse Abstract' : 'Expand Abstract';
+    });
+  });
+
   // ---------- Paper filter ----------
   const searchInput = document.getElementById('search');
   const chipsRoot = document.getElementById('chips');
@@ -88,18 +111,17 @@
   const selectedPanel = document.getElementById('selected-panel');
   const papers = Array.from(document.querySelectorAll('.paper'));
 
-  // Single-select: always exactly one active tab
   let activeCat = chipsRoot?.querySelector('.tab.active')?.dataset?.cat || '';
 
-  const paperIndex = papers.map(el => ({
+  const paperIndex = papers.map((el) => ({
     el,
-    cats: (el.dataset.cats || '').split(',').filter(Boolean),
+    cats: (el.dataset.cats || '').split(',').map((cat) => cat.trim()).filter(Boolean),
     text: (el.textContent || '').toLowerCase(),
   }));
 
   function updateCount() {
-    const visible = paperIndex.filter(p => !p.el.classList.contains('hidden')).length;
-    if (countBadge) countBadge.textContent = visible + ' papers';
+    const visible = paperIndex.filter((p) => !p.el.classList.contains('hidden')).length;
+    if (countBadge) countBadge.textContent = visible + (visible === 1 ? ' paper' : ' papers');
   }
 
   function applyFilter() {
@@ -110,18 +132,20 @@
       p.el.classList.toggle('hidden', !(matchCat && matchText));
     }
     updateCount();
+    refreshAbstractToggles();
   }
 
   function showSelectedPanel(on) {
     paperList?.classList.toggle('hidden', on);
     controls?.classList.toggle('hidden', on);
     selectedPanel?.classList.toggle('hidden', !on);
+    if (on && selectedPanel) refreshAbstractToggles(selectedPanel);
   }
 
   chipsRoot?.addEventListener('click', (e) => {
     const tab = e.target.closest('.tab');
     if (!tab) return;
-    chipsRoot.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    chipsRoot.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
     tab.classList.add('active');
     activeCat = tab.dataset.cat;
     if (activeCat === '__selected__') {
@@ -134,6 +158,7 @@
 
   searchInput?.addEventListener('input', applyFilter);
 
-  // Init
   if (papers.length) applyFilter();
+  refreshAbstractToggles();
+  window.addEventListener('resize', () => refreshAbstractToggles());
 })();

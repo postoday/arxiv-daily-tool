@@ -8,8 +8,15 @@
 </head>
 <body>
   <header class="site-header">
-    <div class="wrap">
-      <a href="{{ asset_prefix }}index.html" class="brand">arXiv Daily</a>
+    <div class="wrap header-wrap">
+      <div class="brand-group">
+        <a href="{{ asset_prefix }}index.html" class="brand">arXiv Daily</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a class="site-nav-link {% if active_page == 'papers' %}active{% endif %}" href="{{ asset_prefix }}index.html">Papers</a>
+          <a class="site-nav-link {% if active_page == 'blogs' %}active blog-active{% endif %}" href="{{ asset_prefix }}blogs/">Blogs</a>
+        </nav>
+      </div>
+      <div class="header-meta">Updated {{ generated_at }}</div>
     </div>
   </header>
 
@@ -18,9 +25,8 @@
   </main>
 
   <footer class="site-footer">
-    <div class="wrap">
+    <div class="wrap footer-wrap">
       <span>Categories: {{ categories|join(", ") }}</span>
-      <span class="sep">·</span>
       <span>Generated {{ generated_at }}</span>
     </div>
   </footer>
